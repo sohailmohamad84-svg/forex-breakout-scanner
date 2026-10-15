@@ -157,19 +157,23 @@ Services started:
 - FastAPI Scanner Backend on `http://localhost:8000`
 - Next.js Dashboard Frontend on `http://localhost:3000`
 
----
-
-## 6. Cloud Hosting on Railway.app (Shareable Live Link)
-
-Want to share the scanner dashboard with a friend so they can open it from their smartphone or laptop anywhere?
-
-See the complete step-by-step instructions in [DEPLOYMENT_RAILWAY.md](DEPLOYMENT_RAILWAY.md):
-1. **Push to GitHub**: Initialize git and push to your GitHub account.
-2. **Deploy Backend**: Railway spins up the FastAPI quantitative engine on `https://<backend>.up.railway.app`.
-3. **Deploy Frontend**: Railway spins up the Next.js responsive dashboard on `https://<frontend>.up.railway.app`.
-4. **Share**: Send the frontend URL to anyone; it works on mobile phones, tablets, and desktop browsers with live Server-Sent Events (SSE).
 
 ---
+
+## 6. One-Click Cloud Hosting on Vercel (Recommended)
+
+Want to share the scanner dashboard with a friend so they can open it from their smartphone or laptop anywhere for free?
+
+See the 3-minute guide in [DEPLOYMENT_VERCEL.md](DEPLOYMENT_VERCEL.md):
+1. **Import on Vercel**: Connect your GitHub repo `sohailmohamad84-svg/forex-breakout-scanner` at [vercel.com/new](https://vercel.com/new).
+2. **Set Root Directory**: Select `frontend`.
+3. **Deploy**: In 60 seconds, you get a live `https://*.vercel.app` URL.
+4. **Share**: Works on iPhone, Android, tablets, and laptops worldwide with native Next.js serverless API routes and live Yahoo Finance forex data.
+
+*(Alternatively, full multi-service deployment with persistent Python workers on Railway is documented in [DEPLOYMENT_RAILWAY.md](DEPLOYMENT_RAILWAY.md)).*
+
+---
+
 
 ## 6. Telegram Alert Integration
 
