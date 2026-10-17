@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrRefreshScan } from '@/lib/scannerEngine';
+import { getAllSignalsWithHistory, getOrRefreshScan } from '@/lib/scannerEngine';
 
 export async function GET(req: NextRequest) {
-  const { signals } = await getOrRefreshScan();
   const searchParams = req.nextUrl.searchParams;
   const direction = searchParams.get('direction');
   const timeframe = searchParams.get('timeframe');
@@ -10,7 +9,17 @@ export async function GET(req: NextRequest) {
   const minProb = parseFloat(searchParams.get('min_probability') || '0');
   const status = searchParams.get('status');
 
-  let filtered = [...signals];
+  // If status is strictly ACTIVE, return only live signals.
+  // Otherwise, return all signals including historical records.
+  let allSignals = [];
+  if (status === 'ACTIVE') {
+    const { signals } = await getOrRefreshScan();
+    allSignals = signals;
+  } else {
+    allSignals = await getAllSignalsWithHistory();
+  }
+
+  let filtered = [...allSignals];
 
   if (direction && direction !== 'ALL') {
     filtered = filtered.filter((s) => s.direction === direction);

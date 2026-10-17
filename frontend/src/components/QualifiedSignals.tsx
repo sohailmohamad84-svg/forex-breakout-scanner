@@ -177,6 +177,9 @@ export default function QualifiedSignals({
                     <ArrowUpDown className="w-3 h-3" />
                   </div>
                 </th>
+                <th className="py-3 px-3 text-slate-400">Live P&L</th>
+                <th className="py-3 px-3 text-slate-400">Target (TP)</th>
+                <th className="py-3 px-3 text-slate-400">Stop (SL)</th>
                 <th className="py-3 px-3 text-slate-400">Timeframe</th>
                 <th
                   onClick={() => handleSort('detected_at')}
@@ -189,6 +192,7 @@ export default function QualifiedSignals({
                 </th>
                 <th className="py-3 px-4 text-right">Actions</th>
               </tr>
+
             </thead>
             <tbody className="divide-y divide-slate-800/60 font-mono text-[11px]">
               {filteredSignals.length === 0 ? (
@@ -266,8 +270,33 @@ export default function QualifiedSignals({
                         </span>
                       </td>
 
+                      {/* Live P&L */}
+                      <td className="py-3 px-3 font-bold">
+                        <span
+                          className={`inline-block px-2 py-0.5 rounded text-[10px] ${
+                            (s.pnl_pips ?? 0) >= 0
+                              ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                              : 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
+                          }`}
+                        >
+                          {(s.pnl_pips ?? 0) >= 0 ? '+' : ''}
+                          {(s.pnl_pips ?? 0).toFixed(1)}p
+                        </span>
+                      </td>
+
+                      {/* Target (TP) */}
+                      <td className="py-3 px-3 text-emerald-400">
+                        {(s.take_profit ?? (s.signal_price * 1.0035)).toFixed(pDec)}
+                      </td>
+
+                      {/* Stop (SL) */}
+                      <td className="py-3 px-3 text-rose-400">
+                        {(s.stop_loss ?? (s.signal_price * 0.998)).toFixed(pDec)}
+                      </td>
+
                       {/* Timeframe */}
                       <td className="py-3 px-3">
+
                         <span className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 font-mono text-[10px] uppercase">
                           {s.timeframe}
                         </span>

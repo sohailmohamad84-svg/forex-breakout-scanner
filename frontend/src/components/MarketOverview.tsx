@@ -260,15 +260,48 @@ export default function MarketOverview({
                   />
                 </div>
 
-                <div className="mt-3 grid grid-cols-2 gap-2 text-[11px] font-mono border-t border-slate-800/60 pt-2">
-                  <div>
-                    <span className="text-slate-500 block">Signal Price</span>
+                {/* Live P&L and Outcome Status */}
+                <div className="mt-2.5 flex items-center justify-between bg-slate-900/90 rounded-md px-2.5 py-1.5 border border-slate-800">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] text-slate-400 font-sans">Live P&L:</span>
+                    <span
+                      className={`text-xs font-mono font-bold ${
+                        (sig.pnl_pips ?? 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                      }`}
+                    >
+                      {(sig.pnl_pips ?? 0) >= 0 ? '+' : ''}
+                      {(sig.pnl_pips ?? 0).toFixed(1)} Pips
+                    </span>
+                  </div>
+                  <span
+                    className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase font-mono ${
+                      (sig.pnl_pips ?? 0) >= 0
+                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                        : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                    }`}
+                  >
+                    {(sig.pnl_pips ?? 0) >= 0
+                      ? `+$${((sig.pnl_pips ?? 0) * 10).toFixed(0)}/lot`
+                      : `-$${(Math.abs(sig.pnl_pips ?? 0) * 10).toFixed(0)}/lot`}
+                  </span>
+                </div>
+
+                {/* Key Price Levels: Entry, TP, SL */}
+                <div className="mt-2.5 grid grid-cols-3 gap-1.5 text-[10px] font-mono border-t border-slate-800/60 pt-2 text-center">
+                  <div className="bg-slate-900/60 p-1 rounded border border-slate-800/50">
+                    <span className="text-slate-500 block text-[9px]">Entry</span>
                     <span className="text-white font-semibold">{sig.signal_price.toFixed(sig.pair.includes('JPY') ? 3 : 5)}</span>
                   </div>
-                  <div>
-                    <span className="text-slate-500 block">Trigger Level</span>
-                    <span className={sig.direction === 'BUY' ? 'text-emerald-400 font-semibold' : 'text-rose-400 font-semibold'}>
-                      {sig.breakout_level.toFixed(sig.pair.includes('JPY') ? 3 : 5)}
+                  <div className="bg-slate-900/60 p-1 rounded border border-slate-800/50">
+                    <span className="text-emerald-500 block text-[9px]">Target (TP)</span>
+                    <span className="text-emerald-400 font-semibold">
+                      {(sig.take_profit ?? (sig.signal_price * 1.0035)).toFixed(sig.pair.includes('JPY') ? 3 : 5)}
+                    </span>
+                  </div>
+                  <div className="bg-slate-900/60 p-1 rounded border border-slate-800/50">
+                    <span className="text-rose-500 block text-[9px]">Stop (SL)</span>
+                    <span className="text-rose-400 font-semibold">
+                      {(sig.stop_loss ?? (sig.signal_price * 0.998)).toFixed(sig.pair.includes('JPY') ? 3 : 5)}
                     </span>
                   </div>
                 </div>
@@ -276,6 +309,7 @@ export default function MarketOverview({
                 <div className="mt-2 text-[10px] text-slate-500 truncate">
                   {sig.qualification_reason}
                 </div>
+
               </div>
             ))}
           </div>

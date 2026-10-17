@@ -8,9 +8,12 @@ import {
   Info,
   Layers,
   Cpu,
+  DollarSign,
 } from 'lucide-react';
+
 import { SignalItem, api, MarketCandlesResponse } from '../lib/api';
 import CandlestickChart from './CandlestickChart';
+
 
 interface SignalDetailsModalProps {
   signal: SignalItem | null;
@@ -26,6 +29,7 @@ export default function SignalDetailsModal({
   const [marketData, setMarketData] = useState<MarketCandlesResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lotSize, setLotSize] = useState<number>(1.0);
 
   useEffect(() => {
     if (!signal) return;
@@ -144,8 +148,117 @@ export default function SignalDetailsModal({
             )}
           </div>
 
+          {/* Live Trade P&L Tracker & Position Calculator */}
+          <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
+              <div>
+                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                  <DollarSign className="w-4 h-4 text-emerald-400" />
+                  <span>Trade Profit & Loss Tracker (Live Performance)</span>
+                </h3>
+                <p className="text-[11px] text-slate-400">
+                  Live outcome tracking if you entered at Signal Price ({signal.signal_price.toFixed(pDec)})
+                </p>
+              </div>
+
+              {/* Lot size selector */}
+              <div className="flex items-center gap-1.5 bg-slate-900 p-1 rounded-lg border border-slate-800 text-xs">
+                <span className="text-[10px] text-slate-400 px-1 font-mono">Lot Size:</span>
+                {[
+                  { label: '1.0 Std ($10/p)', value: 1.0 },
+                  { label: '0.1 Mini ($1/p)', value: 0.1 },
+                  { label: '0.01 Micro ($0.10/p)', value: 0.01 },
+                ].map((lot) => (
+                  <button
+                    key={lot.value}
+                    onClick={() => setLotSize(lot.value)}
+                    className={`px-2 py-0.5 rounded text-[10px] font-semibold transition cursor-pointer ${
+                      lotSize === lot.value ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    {lot.label.split(' ')[0]}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 font-mono text-center">
+              <div className="bg-slate-900/80 p-2.5 rounded-lg border border-slate-800/60">
+                <span className="text-[10px] text-slate-400 block font-sans">Current Price</span>
+                <span className="text-sm font-bold text-white">
+                  {(signal.current_price ?? signal.signal_price).toFixed(pDec)}
+                </span>
+              </div>
+
+              <div className="bg-slate-900/80 p-2.5 rounded-lg border border-slate-800/60">
+                <span className="text-[10px] text-slate-400 block font-sans">Live P&L (Pips)</span>
+                <span
+                  className={`text-sm font-bold ${
+                    (signal.pnl_pips ?? 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                  }`}
+                >
+                  {(signal.pnl_pips ?? 0) >= 0 ? '+' : ''}
+                  {(signal.pnl_pips ?? 0).toFixed(1)} Pips
+                </span>
+              </div>
+
+              <div className="bg-slate-900/80 p-2.5 rounded-lg border border-slate-800/60">
+                <span className="text-[10px] text-slate-400 block font-sans">Estimated P&L ($)</span>
+                <span
+                  className={`text-sm font-bold ${
+                    (signal.pnl_pips ?? 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                  }`}
+                >
+                  {(signal.pnl_pips ?? 0) >= 0 ? '+' : ''}$
+                  {((signal.pnl_pips ?? 0) * 10 * lotSize).toFixed(2)}
+                </span>
+              </div>
+
+              <div className="bg-slate-900/80 p-2.5 rounded-lg border border-slate-800/60">
+                <span className="text-[10px] text-slate-400 block font-sans">Current Status</span>
+                <span
+                  className={`text-xs font-bold px-2 py-0.5 rounded inline-block uppercase mt-0.5 ${
+                    (signal.pnl_pips ?? 0) >= 0
+                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                      : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                  }`}
+                >
+                  {signal.outcome?.replace('_', ' ') || ((signal.pnl_pips ?? 0) >= 0 ? 'IN PROFIT' : 'IN LOSS')}
+                </span>
+              </div>
+            </div>
+
+            {/* Profit Target & Stop Loss Levels */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
+              <div className="bg-emerald-950/40 border border-emerald-800/50 p-2.5 rounded-lg flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] text-emerald-400 font-sans block font-semibold">Take Profit (Target 1)</span>
+                  <span className="text-white font-bold text-sm">
+                    {(signal.take_profit ?? (signal.signal_price * 1.0035)).toFixed(pDec)}
+                  </span>
+                </div>
+                <span className="text-emerald-400 font-bold text-xs bg-emerald-900/50 px-2 py-1 rounded">
+                  +35.0 Pips
+                </span>
+              </div>
+
+              <div className="bg-rose-950/40 border border-rose-800/50 p-2.5 rounded-lg flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] text-rose-400 font-sans block font-semibold">Stop Loss (Invalidation)</span>
+                  <span className="text-white font-bold text-sm">
+                    {(signal.stop_loss ?? (signal.signal_price * 0.998)).toFixed(pDec)}
+                  </span>
+                </div>
+                <span className="text-rose-400 font-bold text-xs bg-rose-900/50 px-2 py-1 rounded">
+                  -20.0 Pips
+                </span>
+              </div>
+            </div>
+          </div>
+
           {/* Probability & Breakdown Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
             {/* Bullish Probability Card */}
             <div className="bg-slate-950 border border-emerald-950/80 rounded-xl p-4 space-y-2">
               <div className="flex items-center justify-between text-xs text-slate-400">

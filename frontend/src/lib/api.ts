@@ -14,7 +14,13 @@ export interface SignalItem {
   winning_probability: number;
   threshold_used: number;
   signal_price: number;
+  current_price?: number;
   breakout_level: number;
+  take_profit?: number;
+  stop_loss?: number;
+  pnl_pips?: number;
+  pnl_percent?: number;
+  outcome?: 'IN_PROFIT' | 'IN_LOSS' | 'TARGET_HIT' | 'STOPPED_OUT' | 'ACTIVE';
   candle_timestamp: string;
   detected_at: string;
   qualification_reason: string;
@@ -26,6 +32,7 @@ export interface SignalItem {
   subsequent_max_favorable: number;
   subsequent_max_adverse: number;
 }
+
 
 export interface ScannerStatus {
   is_running: boolean;
