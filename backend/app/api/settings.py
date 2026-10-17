@@ -42,7 +42,9 @@ def get_settings(request: Request, db: Session = Depends(get_db)):
 
 
 @router.put("", response_model=SettingsSchema)
+@router.post("", response_model=SettingsSchema)
 def update_settings(payload: SettingsSchema, request: Request, db: Session = Depends(get_db)):
+
     # Validate provider name
     valid_providers = ["yahoo", "twelve_data", "oanda", "mock"]
     if payload.active_provider.lower() not in valid_providers:

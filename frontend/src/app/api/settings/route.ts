@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getScannerConfig, updateScannerConfig } from '@/lib/scannerEngine';
+import { setMarketDataProvider } from '@/lib/marketData';
 import { SettingsData } from '@/lib/api';
+
+export const dynamic = 'force-dynamic';
 
 let settingsState: SettingsData = {
   active_provider: 'yahoo',
@@ -29,17 +32,33 @@ export async function GET() {
   });
 }
 
-export async function PUT(req: Request) {
+async function handleUpdate(req: Request) {
   try {
     const body = await req.json();
     settingsState = { ...settingsState, ...body };
+
+    // Update scanner strategy parameters
     updateScannerConfig(
       body.probability_threshold,
       body.lookback_candles,
       body.percentage_step
     );
+
+    // Update active market data provider and API key
+    if (body.active_provider) {
+      setMarketDataProvider(body.active_provider, body.twelve_data_api_key);
+    }
+
     return NextResponse.json(settingsState);
-  } catch {
-    return NextResponse.json({ error: 'Failed to update settings' }, { status: 400 });
+  } catch (err: any) {
+    return NextResponse.json({ error: err?.message || 'Failed to update settings' }, { status: 400 });
   }
+}
+
+export async function PUT(req: Request) {
+  return handleUpdate(req);
+}
+
+export async function POST(req: Request) {
+  return handleUpdate(req);
 }

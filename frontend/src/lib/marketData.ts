@@ -71,16 +71,75 @@ const TF_TO_YF_INTERVAL: Record<string, { interval: string; range: string }> = {
   '1d': { interval: '1d', range: '1y' },
 };
 
+let currentActiveProvider = 'yahoo';
+let twelveDataApiKey = '';
+
+export function setMarketDataProvider(provider: string, apiKey?: string | null) {
+  if (provider) currentActiveProvider = provider.toLowerCase();
+  if (apiKey !== undefined && apiKey !== null) {
+    twelveDataApiKey = apiKey.trim();
+  }
+}
+
+export function getActiveMarketProvider(): string {
+  return currentActiveProvider;
+}
+
 export async function fetchLiveCandles(pair: string, timeframe: string = '1h', count: number = 200): Promise<Candle[]> {
-  const cacheKey = `${pair}_${timeframe}_${count}`;
+  const cacheKey = `${pair}_${timeframe}_${count}_${currentActiveProvider}`;
   const cached = candleCache.get(cacheKey);
   const now = Date.now();
   if (cached && now - cached.timestamp < CACHE_TTL_MS && cached.candles.length > 10) {
     return cached.candles;
   }
 
+  // 1. If Twelve Data is chosen and API key is provided, query Twelve Data
+  if (currentActiveProvider === 'twelve_data' && twelveDataApiKey) {
+    try {
+      const tdTfMap: Record<string, string> = {
+        '5m': '5min',
+        '15m': '15min',
+        '30m': '30min',
+        '1h': '1h',
+        '4h': '4h',
+        '1d': '1day',
+      };
+      const tdInterval = tdTfMap[timeframe] || '1h';
+      const cleanSymbol = pair.includes('/') ? pair : `${pair.slice(0, 3)}/${pair.slice(3)}`;
+      const tdUrl = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(cleanSymbol)}&interval=${tdInterval}&outputsize=${Math.min(count + 10, 500)}&apikey=${encodeURIComponent(twelveDataApiKey)}&format=JSON`;
+
+      const tdRes = await fetch(tdUrl, { headers: { Accept: 'application/json' }, next: { revalidate: 30 } });
+      if (tdRes.ok) {
+        const tdData = await tdRes.json();
+        if (tdData?.values && Array.isArray(tdData.values) && tdData.values.length > 0) {
+          // Twelve Data returns newest first, reverse for chronological ascending
+          const reversed = [...tdData.values].reverse();
+          const candles: Candle[] = reversed.map((v: any, idx: number) => ({
+            time: new Date(v.datetime).toISOString(),
+            timestamp: Math.floor(new Date(v.datetime).getTime() / 1000),
+            open: parseFloat(v.open),
+            high: parseFloat(v.high),
+            low: parseFloat(v.low),
+            close: parseFloat(v.close),
+            volume: parseFloat(v.volume || '0'),
+            is_closed: idx < reversed.length - 1,
+          }));
+
+          if (candles.length > 5) {
+            candleCache.set(cacheKey, { timestamp: now, candles });
+            return candles;
+          }
+        }
+      }
+    } catch (tdErr) {
+      console.warn(`Twelve Data fetch failed for ${pair}, falling back to Yahoo Finance:`, tdErr);
+    }
+  }
+
+  // 2. Query Yahoo Finance (out-of-the-box live data)
   const yfSymbol = toYahooSymbol(pair);
   const tfConfig = TF_TO_YF_INTERVAL[timeframe] || { interval: '60m', range: '60d' };
+
 
   try {
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${yfSymbol}?interval=${tfConfig.interval}&range=${tfConfig.range}`;

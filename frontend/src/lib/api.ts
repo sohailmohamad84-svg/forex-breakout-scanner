@@ -234,9 +234,10 @@ export const api = {
   getSettings: () => fetchApi<SettingsData>('/api/settings'),
   updateSettings: (settings: SettingsData) =>
     fetchApi<SettingsData>('/api/settings', {
-      method: 'PUT',
+      method: 'POST',
       body: JSON.stringify(settings),
     }),
+
   getMarketCandles: (pair: string, timeframe: string = '1h', count: number = 100) => {
     // Encodes pair symbol like EUR/USD
     return fetchApi<MarketCandlesResponse>(`/api/market/candles/${encodeURIComponent(pair)}?timeframe=${timeframe}&count=${count}`);

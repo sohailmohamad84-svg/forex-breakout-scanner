@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllSignalsWithHistory, getOrRefreshScan } from '@/lib/scannerEngine';
+export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
+
   const searchParams = req.nextUrl.searchParams;
   const direction = searchParams.get('direction');
   const timeframe = searchParams.get('timeframe');
