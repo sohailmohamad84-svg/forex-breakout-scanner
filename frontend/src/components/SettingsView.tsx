@@ -39,7 +39,17 @@ export default function SettingsView({ onSettingsSaved }: SettingsViewProps) {
     setLoading(true);
     try {
       const [s, p] = await Promise.all([api.getSettings(), api.getPairs()]);
-      setSettings(s);
+      let mergedSettings = s;
+      if (typeof window !== 'undefined') {
+        try {
+          const local = localStorage.getItem('forex_scanner_settings');
+          if (local) {
+            const parsed = JSON.parse(local);
+            mergedSettings = { ...s, ...parsed };
+          }
+        } catch {}
+      }
+      setSettings(mergedSettings);
       setPairs(p);
     } catch (e: any) {
       setErrorMsg(e.message || 'Failed to load configuration');
@@ -71,6 +81,14 @@ export default function SettingsView({ onSettingsSaved }: SettingsViewProps) {
     setSuccessMsg(null);
 
     try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('forex_scanner_settings', JSON.stringify(settings));
+        document.cookie = `scanner_provider=${settings.active_provider}; path=/; max-age=31536000; SameSite=Lax`;
+        if (settings.twelve_data_api_key) {
+          document.cookie = `scanner_twelve_key=${encodeURIComponent(settings.twelve_data_api_key)}; path=/; max-age=31536000; SameSite=Lax`;
+        }
+      }
+
       await api.updateSettings(settings);
       setSuccessMsg('Settings successfully updated and applied to scanning worker!');
       onSettingsSaved();

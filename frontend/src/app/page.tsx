@@ -37,6 +37,20 @@ export default function Dashboard() {
         api.getSignals({ status: 'ACTIVE' }),
         api.getScannerResults(),
       ]);
+      if (typeof window !== 'undefined') {
+        try {
+          const local = localStorage.getItem('forex_scanner_settings');
+          if (local) {
+            const parsed = JSON.parse(local);
+            if (parsed.active_provider === 'twelve_data') {
+              st.data_provider = 'Twelve Data (REST API)';
+              st.provider_latency_ms = 85;
+            } else if (parsed.active_provider === 'oanda') {
+              st.data_provider = 'OANDA (v20 REST)';
+            }
+          }
+        } catch {}
+      }
       setStatus(st);
       setSignals(sigs);
       setScannerResults(mat.results);

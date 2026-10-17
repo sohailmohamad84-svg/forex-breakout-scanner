@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getScannerConfig, updateScannerConfig } from '@/lib/scannerEngine';
 import { setMarketDataProvider } from '@/lib/marketData';
 import { SettingsData } from '@/lib/api';
@@ -22,7 +22,17 @@ let settingsState: SettingsData = {
   oanda_account_id: null,
 };
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const cookieProvider = req.cookies.get('scanner_provider')?.value;
+  const cookieKey = req.cookies.get('scanner_twelve_key')?.value;
+  if (cookieProvider) {
+    settingsState.active_provider = cookieProvider;
+    setMarketDataProvider(cookieProvider, cookieKey ? decodeURIComponent(cookieKey) : undefined);
+  }
+  if (cookieKey) {
+    settingsState.twelve_data_api_key = decodeURIComponent(cookieKey);
+  }
+
   const cfg = getScannerConfig();
   return NextResponse.json({
     ...settingsState,
@@ -49,7 +59,25 @@ async function handleUpdate(req: Request) {
       setMarketDataProvider(body.active_provider, body.twelve_data_api_key);
     }
 
-    return NextResponse.json(settingsState);
+    const res = NextResponse.json(settingsState);
+
+    // Persist to cookie so edge serverless functions retain active provider
+    if (body.active_provider) {
+      res.cookies.set('scanner_provider', body.active_provider, {
+        path: '/',
+        maxAge: 60 * 60 * 24 * 365,
+        sameSite: 'lax',
+      });
+    }
+    if (body.twelve_data_api_key !== undefined) {
+      res.cookies.set('scanner_twelve_key', encodeURIComponent(body.twelve_data_api_key || ''), {
+        path: '/',
+        maxAge: 60 * 60 * 24 * 365,
+        sameSite: 'lax',
+      });
+    }
+
+    return res;
   } catch (err: any) {
     return NextResponse.json({ error: err?.message || 'Failed to update settings' }, { status: 400 });
   }

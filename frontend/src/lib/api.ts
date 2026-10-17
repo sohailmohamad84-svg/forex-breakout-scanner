@@ -188,12 +188,30 @@ const API_BASE = getApiBase();
 
 export async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const url = `${API_BASE}${endpoint}`;
+  
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options?.headers as Record<string, string>),
+  };
+
+  if (typeof window !== 'undefined') {
+    try {
+      const local = localStorage.getItem('forex_scanner_settings');
+      if (local) {
+        const parsed = JSON.parse(local);
+        if (parsed.active_provider) {
+          headers['x-market-provider'] = parsed.active_provider;
+        }
+        if (parsed.twelve_data_api_key) {
+          headers['x-twelve-api-key'] = parsed.twelve_data_api_key;
+        }
+      }
+    } catch {}
+  }
+
   const res = await fetch(url, {
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
+    headers,
     cache: 'no-store',
   });
 

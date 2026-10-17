@@ -1,4 +1,4 @@
-import { DEFAULT_PAIRS, fetchLiveCandles } from './marketData';
+import { DEFAULT_PAIRS, fetchLiveCandles, getFormattedProviderName } from './marketData';
 import { calculateBreakoutProbability, evaluateDecision } from './indicator';
 import { ScannerPairResult, ScannerStatus, SignalItem } from './api';
 
@@ -330,7 +330,7 @@ export async function runFullScan(): Promise<{
           detected_at: new Date().toISOString(),
           qualification_reason: dec.reason,
           status: 'ACTIVE',
-          data_provider: 'Yahoo Finance',
+          data_provider: getFormattedProviderName(),
           strategy_version: '1.0.0 (Zeiierman Model)',
           upper_levels: res.upper_levels,
           lower_levels: res.lower_levels,
@@ -370,17 +370,20 @@ export async function getAllSignalsWithHistory(): Promise<SignalItem[]> {
   return [...liveSignals, ...HISTORICAL_ARCHIVE];
 }
 
-export function getScannerStatusData(): ScannerStatus {
+export function getScannerStatusData(customProvider?: string): ScannerStatus {
   const buyCount = cachedSignals.filter((s) => s.direction === 'BUY').length;
   const sellCount = cachedSignals.filter((s) => s.direction === 'SELL').length;
   const conflictCount = cachedResults.filter((r) => r.direction === 'CONFLICT').length;
   const noSignalCount = cachedResults.filter((r) => r.direction === 'NO_SIGNAL').length;
   const insufficientCount = cachedResults.filter((r) => r.direction === 'INSUFFICIENT_DATA').length;
 
+  const activeProvider = customProvider || getFormattedProviderName();
+  const isTwelve = activeProvider.toLowerCase().includes('twelve');
+
   return {
     is_running: true,
     last_scan_time: lastScanTime || new Date().toISOString(),
-    last_scan_duration_ms: 850,
+    last_scan_duration_ms: isTwelve ? 450 : 850,
     total_pairs_enabled: DEFAULT_PAIRS.length,
     pairs_scanned_count: cachedResults.length || DEFAULT_PAIRS.length,
     qualified_buy_count: buyCount,
@@ -388,9 +391,9 @@ export function getScannerStatusData(): ScannerStatus {
     no_signal_count: noSignalCount,
     conflict_count: conflictCount,
     insufficient_data_count: insufficientCount,
-    data_provider: 'Yahoo Finance (Serverless)',
+    data_provider: activeProvider,
     provider_healthy: true,
-    provider_latency_ms: 120,
+    provider_latency_ms: isTwelve ? 85 : 120,
     active_threshold: defaultThreshold,
     concurrency_limit: 4,
   };

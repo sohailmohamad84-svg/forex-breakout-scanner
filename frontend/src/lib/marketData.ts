@@ -85,6 +85,20 @@ export function getActiveMarketProvider(): string {
   return currentActiveProvider;
 }
 
+export function getFormattedProviderName(provider?: string): string {
+  const p = (provider || currentActiveProvider || 'yahoo').toLowerCase();
+  if (p === 'twelve_data') {
+    return 'Twelve Data (REST API)';
+  }
+  if (p === 'oanda') {
+    return 'OANDA (v20 REST)';
+  }
+  if (p === 'mock') {
+    return 'Mock Market Simulator';
+  }
+  return 'Yahoo Finance (Serverless)';
+}
+
 export async function fetchLiveCandles(pair: string, timeframe: string = '1h', count: number = 200): Promise<Candle[]> {
   const cacheKey = `${pair}_${timeframe}_${count}_${currentActiveProvider}`;
   const cached = candleCache.get(cacheKey);

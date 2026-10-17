@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchLiveCandles } from '@/lib/marketData';
+import { fetchLiveCandles, getFormattedProviderName } from '@/lib/marketData';
 import { calculateBreakoutProbability } from '@/lib/indicator';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(
   req: NextRequest,
@@ -24,7 +26,7 @@ export async function GET(
   return NextResponse.json({
     pair: rawSymbol,
     timeframe,
-    provider: 'Yahoo Finance',
+    provider: getFormattedProviderName(),
     quote: {
       bid: Number((latestPrice - spread / 2).toFixed(5)),
       ask: Number((latestPrice + spread / 2).toFixed(5)),
