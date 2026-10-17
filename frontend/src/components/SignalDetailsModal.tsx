@@ -218,14 +218,25 @@ export default function SignalDetailsModal({
                 <span className="text-[10px] text-slate-400 block font-sans">Current Status</span>
                 <span
                   className={`text-xs font-bold px-2 py-0.5 rounded inline-block uppercase mt-0.5 ${
-                    (signal.pnl_pips ?? 0) >= 0
+                    signal.outcome === 'TARGET_HIT' || (signal.pnl_pips ?? 0) > 0
                       ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                      : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                      : signal.outcome === 'STOPPED_OUT' || (signal.pnl_pips ?? 0) < 0
+                      ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                      : 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
                   }`}
                 >
-                  {signal.outcome?.replace('_', ' ') || ((signal.pnl_pips ?? 0) >= 0 ? 'IN PROFIT' : 'IN LOSS')}
+                  {signal.outcome === 'TARGET_HIT'
+                    ? 'TARGET REACHED'
+                    : signal.outcome === 'STOPPED_OUT'
+                    ? 'STOPPED OUT'
+                    : (signal.pnl_pips ?? 0) > 0
+                    ? 'IN PROFIT'
+                    : (signal.pnl_pips ?? 0) < 0
+                    ? 'IN LOSS'
+                    : 'AT ENTRY (OPEN)'}
                 </span>
               </div>
+
             </div>
 
             {/* Profit Target & Stop Loss Levels */}

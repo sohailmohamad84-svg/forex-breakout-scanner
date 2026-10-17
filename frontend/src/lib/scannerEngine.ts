@@ -302,9 +302,12 @@ export async function runFullScan(): Promise<{
           outcome = 'STOPPED_OUT';
         } else if (pnlPips > 0) {
           outcome = 'IN_PROFIT';
-        } else {
+        } else if (pnlPips < 0) {
           outcome = 'IN_LOSS';
+        } else {
+          outcome = 'ACTIVE';
         }
+
 
         signals.push({
           id: signalCounter++,
